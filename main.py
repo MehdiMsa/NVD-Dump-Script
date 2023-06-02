@@ -1,13 +1,15 @@
 import requests
 import json
 
-API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
+API_URL = "https://services.nvd.nist.gov/rest/json/cves/1.0"
 API_KEY = "17c94377-b9f3-4d36-add6-fe2fe31e6ec3"
 OUTPUT_FILE = "NVD_Data.json"
 
+params = {"startIndex": 0, "resultPerPage": 2000}
+
 
 # this is an optional function that implements the cpeName parameter
-
+"""
 def get_cve_data(CPE_Name):
     b_url = "https://services.nvd.nist.gov/rest/json/cves/2.0"
     url = f"{b_url}?cpeName={CPE_Name}"
@@ -23,18 +25,48 @@ def get_cve_data(CPE_Name):
 
 cpe_name = "cpe:2.3:o:microsoft:windows_10:1607:*:*:*:*:*:*:*"
 cve_data = get_cve_data(cpe_name)
-
+"""
 try:
-
-    if cve_data:
-        with open("cve_data.json", "w") as json_file:
-            json.dump(cve_data, json_file, indent=4)
-
-    response = requests.get(API_URL, headers={"API_Key": API_KEY})
+    """
+    cve_data:
+       with open("cve_data.json", "w") as json_file:
+           json.dump(cve_data, json_file, indent=4)
+    """
+    response = requests.get(API_URL, params=params, headers={"API_Key": API_KEY})
 
     response.raise_for_status()
 
     data = response.json()
+
+
+    total_results=data["totalResults"]
+    all_entries = []
+
+    while len(all_entries) < total_results:
+        for entry in data["result"]["CVE_Items"]:
+            all_entries.append(entry)
+
+            params["startIndex"] += params["resultPerPage"]
+
+            response = requests.get(API_URL, params=params)
+            """headers={"API_Key": API_KEY}"""
+            response = requests.get(API_URL)
+            print(response.text)
+
+            data = response.json()
+
+            try:
+                data = response.json()
+
+            except json.JSONDecodeError as e:
+                print("Error decoding JSON response:", e)
+                print("Response content:", response.content)
+
+    with open("nvd_DB.json", "w") as file:
+        json.dump(all_entries, file)
+
+    print(f"Successfully dumped {total_results} entries to nvd_DB.json")
+
 
     with open(OUTPUT_FILE, "w") as file:
         json.dump(data, file, indent=4)
@@ -44,6 +76,8 @@ try:
 
 except requests.exceptions.RequestException as e:
     print("An error occurred:", e)
+
+
 
 '''
 
