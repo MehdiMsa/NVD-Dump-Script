@@ -1,98 +1,52 @@
 import requests
 import json
-
-API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
-API_KEY = "17c94377-b9f3-4d36-add6-fe2fe31e6ec3"
-OUTPUT_FILE = "NVD_Data.json"
+import time
+import datetime
 
 
-# this is an optional function that implements the cpeName parameter
+def dump_nvd_database():
 
-def get_cve_data(CPE_Name):
-    b_url = "https://services.nvd.nist.gov/rest/json/cves/2.0"
-    url = f"{b_url}?cpeName={CPE_Name}"
-    response2 = requests.get(url)
+    base_url = 'https://services.nvd.nist.gov/rest/json/cves/2.0'
 
-    if response2.status_code == 200:
-        data2 = response2.json()
-        return data2
-    else:
-        print("Failed to retrieve CVE data")
-        return None
+    result_per_page = 2000
 
+    start_index = 0
 
-cpe_name = "cpe:2.3:o:microsoft:windows_10:1607:*:*:*:*:*:*:*"
-cve_data = get_cve_data(cpe_name)
+    total_count = get_total_count(base_url)
 
-try:
+    with open('nvd_database.json', 'w') as json_file:
 
-    if cve_data:
-        with open("cve_data.json", "w") as json_file:
-            json.dump(cve_data, json_file, indent=4)
+        while start_index <= total_count:
+            url = f'{base_url}?startIndex={start_index}&resultsPerPage={result_per_page}&'
+            response = make_request(url)
 
-    response = requests.get(API_URL, headers={"API_Key": API_KEY})
+            if response.status_code == 200:
+                json_data = response.json()
+                json.dump(json_data, json_file, indent=4)
+                json_file.write('\n')
+                print(f'Dumped {start_index} - {start_index + result_per_page - 1} records')
 
-    response.raise_for_status()
+            start_index += result_per_page
+            time.sleep(6)
 
-    data = response.json()
-
-    with open(OUTPUT_FILE, "w") as file:
-        json.dump(data, file, indent=4)
-
-    print("Data dumped successfully to", OUTPUT_FILE)
-
-
-except requests.exceptions.RequestException as e:
-    print("An error occurred:", e)
-
-'''
-
-This option allows to create a CLI to accept parameters such as API key and optionally CPE name
-
-import argparse
-import requests
-import json
-
-API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
-OUTPUT_FILE = "NVD_Data.json"
-
-def get_cve_data(cpe_name):
-    url = f"{API_URL}?cpeName={cpe_name}"
-    response = requests.get(url)
+def get_total_count(base_url):
+    url = f'{base_url}?startIndex=0&resultsPerPage=1'
+    response = make_request(url)
     if response.status_code == 200:
-        data = response.json()
-        return data
-    else:
-        print("Failed to retrieve CVE data")
-        return None
+        json_data = response.json()
+        print(json_data)
+        print(datetime.datetime.now())
+        return json_data['totalResults']
 
-def dump_nvd_data(api_key, cpe_name=None):
-    if cpe_name:
-        cve_data = get_cve_data(cpe_name)
-        if cve_data:
-            with open("cve_data.json", "w") as json_file:
-                json.dump(cve_data, json_file, indent=4)
+    return 0
 
-    headers = {"API_Key": api_key}
-    response = requests.get(API_URL, headers=headers)
+def make_request(url):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+        'API-Key': '17c94377-b9f3-4d36-add6-fe2fe31e6ec3'
+    }
+    response = requests.get(url, headers=headers)
+    return response
 
-    if response.status_code == 200:
-        data = response.json()
-        with open(OUTPUT_FILE, "w") as file:
-            json.dump(data, file, indent=4)
-        print("Data dumped successfully to", OUTPUT_FILE)
-    else:
-        print("Failed to retrieve NVD data")
-
-def main():
-    parser = argparse.ArgumentParser(description="NVD Database Dump using API 2.0 & Python")
-    parser.add_argument("-k", "--api-key", required=True, help="API Key for NVD API 2.0")
-    parser.add_argument("-c", "--cpe-name", help="CPE name for filtering CVE data")
-    args = parser.parse_args()
-
-    dump_nvd_data(args.api_key, args.cpe_name)
-
-if __name__ == "__main__":
-    main()
-
-'''
+if __name__ == '__main__':
+    dump_nvd_database()
