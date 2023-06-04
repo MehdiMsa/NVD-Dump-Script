@@ -15,19 +15,25 @@ def dump_nvd_database():
     total_count = get_total_count(base_url)
 
     with open('nvd_database.json', 'w') as json_file:
+        try:
+            while start_index <= total_count:
+                url = f'{base_url}?startIndex={start_index}&resultsPerPage={result_per_page}&'
+                response = make_request(url)
 
-        while start_index <= total_count:
-            url = f'{base_url}?startIndex={start_index}&resultsPerPage={result_per_page}&'
-            response = make_request(url)
+                if response.status_code == 200:
+                    json_data = response.json()
+                    json.dump(json_data, json_file, indent=4)
+                    json_file.write('\n')
+                    print(f'Dumped {start_index} - {start_index + result_per_page - 1} records')
 
-            if response.status_code == 200:
-                json_data = response.json()
-                json.dump(json_data, json_file, indent=4)
-                json_file.write('\n')
-                print(f'Dumped {start_index} - {start_index + result_per_page - 1} records')
-
-            start_index += result_per_page
-            time.sleep(6)
+                start_index += result_per_page
+                time.sleep(6)
+        except requests.exceptions.RequestException as e:
+            print(f"An error occurred during the request: {e}")
+        except json.JSONDecodeError as e:
+            print(f"An error occurred while parsing the JSON response: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
 
 def get_total_count(base_url):
     url = f'{base_url}?startIndex=0&resultsPerPage=1'
