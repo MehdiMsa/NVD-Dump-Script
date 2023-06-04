@@ -15,6 +15,7 @@ def dump_nvd_database():
     total_count = get_total_count(base_url)
 
     with open('nvd_database.json', 'w') as json_file:
+        start_time = time.time()
         try:
             while start_index <= total_count:
                 url = f'{base_url}?startIndex={start_index}&resultsPerPage={result_per_page}&'
@@ -34,6 +35,10 @@ def dump_nvd_database():
             print(f"An error occurred while parsing the JSON response: {e}")
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
+
+        end_time = time.time()
+        duration = end_time - start_time
+        print(f"Dumping the database took {duration:.2f} seconds")
 
 def get_total_count(base_url):
     url = f'{base_url}?startIndex=0&resultsPerPage=1'
