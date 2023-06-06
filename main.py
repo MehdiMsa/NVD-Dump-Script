@@ -9,12 +9,11 @@ def dump_nvd_database():
     base_url = 'https://services.nvd.nist.gov/rest/json/cves/2.0'
 
     result_per_page = 2000
-
     start_index = 0
 
     total_count = get_total_count(base_url)
 
-    with open('nvd_database.json', 'w') as json_file:
+    with open('nvd_database.json', 'a') as json_file:
         start_time = time.time()
         try:
             while start_index <= total_count:
