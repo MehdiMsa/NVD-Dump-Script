@@ -53,7 +53,7 @@ def get_total_count(base_url):
 def make_request(url):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
-        'API-Key': '17c94377-b9f3-4d36-add6-fe2fe31e6ec3'
+        'apiKey': '17c94377-b9f3-4d36-add6-fe2fe31e6ec3'
     }
     response = requests.get(url, headers=headers)
     return response
